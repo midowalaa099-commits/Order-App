@@ -21,8 +21,10 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => UserRole::CUSTOMER->value,
         ]);
+
+        $user->role = UserRole::CUSTOMER->value;
+        $user->save();
 
         return (new UserResource($user))
             ->response()

@@ -20,7 +20,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/register', [
         AuthController::class,
         'register',
-    ]);
+    ])->middleware('throttle:register');
 
     Route::post('/login', [
         AuthController::class,

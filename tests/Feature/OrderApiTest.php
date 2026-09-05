@@ -69,6 +69,28 @@ it('creates an order', function () {
     ]);
 });
 
+it('rejects orders from a closed restaurant', function () {
+    $user = User::factory()->customer()->create();
+    $restaurant = Restaurant::factory()->create(['is_open' => false]);
+    $meal = Meal::factory()->create(['restaurant_id' => $restaurant->id]);
+    $address = Address::factory()->create(['user_id' => $user->id]);
+
+    Sanctum::actingAs($user, ['*']);
+
+    $response = $this->postJson('/api/v1/orders', [
+        'restaurant_id' => $restaurant->id,
+        'address_id' => $address->id,
+        'items' => [[
+            'meal_id' => $meal->id,
+            'quantity' => 1,
+        ]],
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['restaurant_id']);
+    $this->assertDatabaseCount('orders', 0);
+});
+
 it('fails validation when order items are missing', function () {
     $user = User::factory()->customer()->create();
 
@@ -177,6 +199,28 @@ it('rejects invalid order status values', function () {
     ]);
 
     $response->assertStatus(422);
+    expect($order->fresh()->status)->toBe('pending');
+});
+
+it('rejects illegal order status transitions', function () {
+    $customer = User::factory()->customer()->create();
+    $restaurantOwner = User::factory()->restaurantOwner()->create();
+    $restaurant = Restaurant::factory()->create(['user_id' => $restaurantOwner->id]);
+    $address = Address::factory()->create(['user_id' => $customer->id]);
+
+    $order = Order::factory()->create([
+        'user_id' => $customer->id,
+        'restaurant_id' => $restaurant->id,
+        'address_id' => $address->id,
+        'status' => 'pending',
+    ]);
+
+    Sanctum::actingAs($restaurantOwner, ['*']);
+
+    $this->putJson("/api/v1/orders/{$order->id}", [
+        'status' => 'delivered',
+    ])->assertStatus(403);
+
     expect($order->fresh()->status)->toBe('pending');
 });
 

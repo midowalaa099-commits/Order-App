@@ -15,6 +15,17 @@ it('defaults new users to the customer role', function () {
         ->assertJsonPath('data.role', User::ROLE_CUSTOMER);
 });
 
+it('does not allow mass assignment of an administrative role', function () {
+    $user = User::create([
+        'name' => 'Mass Assignment Test',
+        'email' => 'mass-assignment@example.com',
+        'password' => 'secret123',
+        'role' => User::ROLE_ADMIN,
+    ]);
+
+    expect($user->fresh()->role)->not->toBe(User::ROLE_ADMIN);
+});
+
 it('rejects client role assignment during public registration', function () {
     $response = $this->postJson('/api/v1/register', [
         'name' => 'Test Customer',
