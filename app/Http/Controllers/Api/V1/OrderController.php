@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Resources\OrderResource;
+use App\Models\Order;
 use App\Services\OrderService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
@@ -19,7 +19,7 @@ class OrderController extends Controller
     {
         if ($request->user()->isAdmin()) {
             $orders = Order::query()
-                ->with('items.meal', 'restaurant')
+                ->with('items.meal', 'restaurant', 'address')
                 ->latest()
                 ->paginate(15);
 
@@ -31,7 +31,7 @@ class OrderController extends Controller
 
             $orders = Order::query()
                 ->whereIn('restaurant_id', $restaurantIds)
-                ->with('items.meal', 'restaurant')
+                ->with('items.meal', 'restaurant', 'address')
                 ->latest()
                 ->paginate(15);
 
@@ -39,7 +39,7 @@ class OrderController extends Controller
         }
 
         $orders = $request->user()->orders()
-            ->with('items.meal', 'restaurant')
+            ->with('items.meal', 'restaurant', 'address')
             ->latest()
             ->paginate(15);
 
@@ -50,8 +50,9 @@ class OrderController extends Controller
     {
         Gate::authorize('view', $order);
 
-        return new OrderResource($order->load('items.meal', 'restaurant'));
+        return new OrderResource($order->load('items.meal', 'restaurant', 'address'));
     }
+
     public function store(StoreOrderRequest $request, OrderService $orderService)
     {
         Gate::authorize('create', Order::class);
@@ -62,7 +63,7 @@ class OrderController extends Controller
         );
 
         return new OrderResource(
-            $order->load('items.meal', 'address')
+            $order->load('items.meal', 'restaurant', 'address')
         );
     }
 

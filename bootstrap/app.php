@@ -1,9 +1,15 @@
 <?php
 
+use App\Http\Middleware\EnsureUserIsAdmin;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,47 +20,47 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'admin' => EnsureUserIsAdmin::class,
         ]);
 
         $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*', 'index.php/api/*'),
         );
 
-        $exceptions->render(function (\Throwable $e, Request $request) {
-            if (! $request->is('api/*')) {
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! $request->is('api/*', 'index.php/api/*')) {
                 return null;
             }
 
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
+            if ($e instanceof ValidationException) {
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => $e->errors(),
                 ], 422);
             }
 
-            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            if ($e instanceof AuthenticationException) {
                 return response()->json([
                     'message' => 'You must be logged in to do that.',
                 ], 401);
             }
 
-            if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+            if ($e instanceof AuthorizationException) {
                 return response()->json([
                     'message' => 'You are not allowed to do that.',
                 ], 403);
             }
 
-            if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+            if ($e instanceof ThrottleRequestsException) {
                 return response()->json([
                     'message' => 'Too many requests. Please slow down and try again shortly.',
                 ], 429);
             }
 
-            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            if ($e instanceof ModelNotFoundException) {
                 $model = class_basename($e->getModel());
 
                 return response()->json([

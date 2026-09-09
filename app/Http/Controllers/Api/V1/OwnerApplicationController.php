@@ -15,6 +15,20 @@ use Illuminate\Validation\ValidationException;
 
 class OwnerApplicationController extends Controller
 {
+    public function current(Request $request)
+    {
+        $application = $request->user()
+            ->restaurantOwnerApplications()
+            ->latest()
+            ->first();
+
+        if (! $application) {
+            return response()->json(['data' => null]);
+        }
+
+        return new RestaurantOwnerApplicationResource($application);
+    }
+
     public function index(Request $request)
     {
         Gate::authorize('viewAny', RestaurantOwnerApplication::class);
@@ -94,7 +108,7 @@ class OwnerApplicationController extends Controller
             $application->user()->update(['role' => User::ROLE_RESTAURANT_OWNER]);
         });
 
-        return new RestaurantOwnerApplicationResource($application->fresh());
+        return new RestaurantOwnerApplicationResource($application->fresh()->load('user'));
     }
 
     public function reject(Request $request, RestaurantOwnerApplication $application)
@@ -113,6 +127,6 @@ class OwnerApplicationController extends Controller
             $application->update(['status' => 'rejected']);
         });
 
-        return new RestaurantOwnerApplicationResource($application->fresh());
+        return new RestaurantOwnerApplicationResource($application->fresh()->load('user'));
     }
 }

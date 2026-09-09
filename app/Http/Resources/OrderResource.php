@@ -19,6 +19,7 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'total_price' => $this->total_price,
             'restaurant' => new RestaurantResource($this->whenLoaded('restaurant')),
+            'address' => new AddressResource($this->whenLoaded('address')),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,
         ];

@@ -9,6 +9,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -17,19 +18,32 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+        $user = DB::transaction(function () use ($validated): User {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
 
-        $user->role = UserRole::CUSTOMER->value;
-        $user->save();
+            $user->role = UserRole::CUSTOMER->value;
+            $user->save();
+
+            if (($validated['account_type'] ?? 'customer') === 'restaurant_owner') {
+                $user->restaurantOwnerApplications()->create([
+                    'business_name' => $validated['business_name'],
+                    'notes' => 'Submitted during restaurant partner registration.',
+                    'status' => 'pending',
+                ]);
+            }
+
+            return $user;
+        });
 
         return (new UserResource($user))
             ->response()
             ->setStatusCode(201);
     }
+
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
@@ -54,10 +68,12 @@ class AuthController extends Controller
             ],
         ]);
     }
+
     public function me(Request $request)
     {
         return new UserResource($request->user());
     }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

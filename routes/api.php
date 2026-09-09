@@ -13,7 +13,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/ping', function () {
         return response()->json([
-            'message' => 'Mini talabat api is working',
+            'message' => 'Order App API is working',
         ]);
     });
 
@@ -48,6 +48,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/owner-applications', [
             OwnerApplicationController::class,
             'store',
+        ]);
+
+        Route::get('/owner-applications/current', [
+            OwnerApplicationController::class,
+            'current',
         ]);
 
         Route::get('/owner-applications/{application}', [

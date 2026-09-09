@@ -15,6 +15,7 @@ class RestaurantOwnerApplicationResource extends JsonResource
             'business_name' => $this->business_name,
             'notes' => $this->notes,
             'status' => $this->status,
+            'applicant' => UserResource::make($this->whenLoaded('user')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

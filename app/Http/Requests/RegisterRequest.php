@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -28,6 +29,14 @@ class RegisterRequest extends FormRequest
                 'string',
                 'min:8',
                 'confirmed',
+            ],
+
+            'account_type' => ['sometimes', Rule::in(['customer', 'restaurant_owner'])],
+            'business_name' => [
+                Rule::requiredIf($this->input('account_type') === 'restaurant_owner'),
+                'nullable',
+                'string',
+                'max:255',
             ],
 
             'role' => ['prohibited'],

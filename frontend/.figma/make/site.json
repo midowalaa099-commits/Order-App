@@ -1,0 +1,10 @@
+{
+  "description": "Discover and order from local restaurants with a user-friendly interface, featuring real-time tracking, personalized address management, and seamless checkout.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

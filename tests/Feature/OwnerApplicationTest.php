@@ -57,6 +57,26 @@ it('allows a customer to view their own owner application', function () {
         ->assertJsonPath('data.status', 'pending');
 });
 
+it('allows a user to view their latest owner application without knowing its id', function () {
+    $customer = User::factory()->customer()->create();
+    RestaurantOwnerApplication::factory()->create([
+        'user_id' => $customer->id,
+        'status' => 'rejected',
+        'created_at' => now()->subDay(),
+    ]);
+    $latest = RestaurantOwnerApplication::factory()->create([
+        'user_id' => $customer->id,
+        'status' => 'pending',
+    ]);
+
+    Sanctum::actingAs($customer, ['*']);
+
+    $this->getJson('/api/v1/owner-applications/current')
+        ->assertOk()
+        ->assertJsonPath('data.id', $latest->id)
+        ->assertJsonPath('data.status', 'pending');
+});
+
 it('prevents a customer from viewing another customer owner application', function () {
     $customer = User::factory()->customer()->create();
     $application = RestaurantOwnerApplication::factory()->create();
