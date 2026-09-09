@@ -1,4 +1,4 @@
-# Mini Talabat API
+# Order App
 
 A Laravel API for a small food delivery workflow with Sanctum authentication, role-based authorization, restaurant management, order processing, and admin-only checks.
 
